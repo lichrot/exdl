@@ -1,0 +1,73 @@
+import { whitespace, symbol, keyword } from "./token.exdl"
+
+/*
+  Rule declaration: identifier = "string" or ( set ) or { map } or submap.{} or rule
+  Set or Union: ( "string" | "string" )
+  Set Range: ( "c" ... "c" )
+  Map or Enum: { identifier = "string" | "string" }
+  Submap or Subenum: identifier.{ identifier | identifier }
+*/
+
+rule identifier = char+ ( symbol.dot char+ )*
+
+rule terminal = symbol.quote char+ symbol.quote
+
+rule syntax = ( comment | import_statement | declaration )*
+
+rule comment = {
+  | inline  = symbol.slash[2] char* whitespace.newline
+  | block   = symbol.slash symbol.star char* symbol.star symbol.slash
+}
+
+rule import_statement =
+  keyword.import
+  symbol.brace.l
+  identifier
+  ( symbol.comma identifier )*
+  symbol.brace.r
+  keyword.from
+  terminal
+
+rule declaration = {
+  | rule  = keyword.export? keyword.rule identifier symbol.equals rule_expression
+  | token = keyword.export? keyword.token identifier symbol.equals expression
+}
+
+rule rule_expression = ( set | map ) multiplier
+
+rule expression = ( terminal | submap | set | map ) multiplier
+
+rule multiplier = symbol.multiplier | specific_multiplier
+
+rule specific_multiplier =
+  symbol.bracket.l
+  symbol.number+
+  ( symbol.comma symbol.number+ )?
+  symbol.bracket.r
+
+rule set = {
+  | inline = symbol.pipe? expression ( symbol.pipe syntax_rule )*
+  | range = symbol.paren.l terminal symbol.dot[3] terminal symbol.paren.r
+  | multiline = symbol.paren.l set.inline symbol.paren.r
+}
+
+rule map =
+  symbol.brace.l
+  symbol.pipe?
+  map_declaration
+  ( symbol.pipe map_declaration )*
+  symbol.brace.r
+
+rule map_declaration = {
+  | inline = terminal
+  | keyed = identifier symbol.equals expression
+}
+
+rule submap =
+  identifier
+  symbol.dot
+  symbol.brace.l
+  symbol.pipe?
+  identifier
+  ( symbol.pipe map_declaration )*
+  symbol.brace.r
