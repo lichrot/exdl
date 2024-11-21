@@ -1,21 +1,10 @@
-/*
-  Rule declaration: identifier = "string" or ( set ) or { map } or submap.{} or rule
-  Set or Union: ( "string" | "string" )
-  Set Range: ( "c" ... "c" )
-  Map or Enum: { identifier = "string" | "string" }
-  Submap or Subenum: identifier.{ identifier | identifier }
-*/
-
-export token whitespace = {
+export token whitespace = (
   | skip space  = " "
   | skip tab    = "\t"
-  | newline     = {
-    | token posix = "\n"
-    | token win   = "\r\n"
-  }
-}
+  | newline     = ( posix = "\n" | win = "\r\n" )
+)
 
-export token symbol = {
+export token symbol = (
   | hook        = "?"
   | pipe        = "|"
   | equals      = "="
@@ -25,17 +14,16 @@ export token symbol = {
   | star        = "*"
   | plus        = "+"
   | quote       = "\""
-  | paren       = { l = "(" | r = ")" }
-  | brace       = { l = "{" | r = "}" }
-  | bracket     = { l = "[" | r = "]" }
+  | paren       = ( l = "(" | r = ")" )
+  | brace       = ( l = "{" | r = "}" )
   | number      = ( "0" ... "9" )
-  | multiplier  = symbol.{ hook | star | plus }
-}
+  | multiplier  = symbol.( hook | star | plus )
+)
 
-export token keyword = {
+export token keyword = (
   | "rule"
   | "token"
   | "export"
   | "import"
   | "from"
-}
+)
